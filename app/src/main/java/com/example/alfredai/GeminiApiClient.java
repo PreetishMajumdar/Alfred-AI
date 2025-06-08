@@ -10,7 +10,7 @@ import java.io.IOException;
 public class GeminiApiClient {
     private static final String TAG = "GeminiApiClient";
     // Updated to use Gemini 2.0 Flash model (currently available)
-    private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+    private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     private final OkHttpClient client = new OkHttpClient();
     private final Gson gson = new Gson();
 
@@ -38,7 +38,7 @@ public class GeminiApiClient {
     }
 
     public void sendMessage(String prompt, Callback callback) {
-        // Request for Gemini 2.5 Flash API
+        // Request for Gemini 2.0 Flash API
         JsonObject requestJson = new JsonObject();
 
         // System instruction for Alfred character
@@ -64,7 +64,7 @@ public class GeminiApiClient {
         contentsArray.add(content);
         requestJson.add("contents", contentsArray);
 
-        // generation config (optimized for Gemini 2.5 Flash)
+        // generation config (optimized for Gemini 2.0 Flash)
         JsonObject generationConfig = new JsonObject();
         generationConfig.addProperty("temperature", 0.8);
         generationConfig.addProperty("topK", 40);
@@ -128,7 +128,7 @@ public class GeminiApiClient {
                     try {
                         JsonObject json = gson.fromJson(respStr, JsonObject.class);
 
-                        // Parse Gemini 2.5 Flash API response format
+                        // Parse Gemini 2.0 Flash API response format
                         if (json.has("candidates") && json.getAsJsonArray("candidates").size() > 0) {
                             JsonObject candidate = json.getAsJsonArray("candidates").get(0).getAsJsonObject();
 
@@ -193,7 +193,7 @@ public class GeminiApiClient {
 
     // Optional: Method to send message without Alfred character (if needed)
     public void sendRawMessage(String prompt, Callback callback) {
-        // Request for Gemini 2.5 Flash API without system instruction
+        // Request for Gemini 2.0 Flash API without system instruction
         JsonObject requestJson = new JsonObject();
 
         // contents array
