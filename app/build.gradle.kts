@@ -60,7 +60,12 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    // Google AI Generative AI library
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
+    // OkHttp (latest stable version)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Gson
     implementation("com.google.code.gson:gson:2.10.1")
 }
