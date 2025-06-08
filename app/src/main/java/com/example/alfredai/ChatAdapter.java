@@ -3,21 +3,69 @@ package com.example.alfredai;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private List<ChatMessage> messages;
+    private Set<Integer> animatedPositions = new HashSet<>();
+    private boolean shouldAnimate = true;
 
     public ChatAdapter(List<ChatMessage> messages) {
         this.messages = messages;
     }
 
     public void updateMessages(List<ChatMessage> newMessages) {
-        this.messages = newMessages;
-        notifyDataSetChanged();
+        if (newMessages == null) {
+            this.messages = new ArrayList<>();
+            notifyDataSetChanged();
+            return;
+        }
+
+        int previousSize = this.messages != null ? this.messages.size() : 0;
+        int newSize = newMessages.size();
+
+        if (previousSize == 0) {
+            // First time loading messages - no animation
+            this.messages = newMessages;
+            shouldAnimate = false;
+            notifyDataSetChanged();
+            return;
+        }
+
+        if (newSize > previousSize) {
+            // New messages added
+            this.messages = newMessages;
+            shouldAnimate = true;
+
+            // Notify only about the new items to trigger individual animations
+            for (int i = previousSize; i < newSize; i++) {
+                animatedPositions.remove(i); // Ensure this position will be animated
+                notifyItemInserted(i);
+            }
+        } else {
+            // Messages updated or removed
+            this.messages = newMessages;
+            notifyDataSetChanged();
+        }
+    }
+
+    // Method to disable animations (useful for initial load)
+    public void disableAnimations() {
+        shouldAnimate = false;
+    }
+
+    // Method to enable animations
+    public void enableAnimations() {
+        shouldAnimate = true;
     }
 
     @NonNull
@@ -31,8 +79,55 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (messages != null && position < messages.size()) {
-            holder.messageText.setText(messages.get(position).getText());
+            ChatMessage message = messages.get(position);
+            holder.messageText.setText(message.getText());
+
+            // Apply animation only if it hasn't been animated yet and animations are enabled
+            if (shouldAnimate && !animatedPositions.contains(position)) {
+                // Add a small delay to ensure the view is properly laid out
+                holder.itemView.post(() -> {
+                    animateMessage(holder.itemView, message.isUser());
+                });
+                animatedPositions.add(position);
+            } else {
+                // Ensure non-animated items are fully visible
+                holder.itemView.setAlpha(1f);
+                holder.itemView.clearAnimation();
+            }
         }
+    }
+
+    private void animateMessage(View view, boolean isUser) {
+        // Clear any existing animations
+        view.clearAnimation();
+
+        // Choose animation based on message type
+        int animationResource = isUser ? R.anim.righttoleft : R.anim.lefttoright;
+
+        // Load and apply the animation
+        Animation animation = AnimationUtils.loadAnimation(view.getContext(), animationResource);
+
+        // Optional: Add animation listener for additional effects
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                // Optional: Set initial state
+                view.setAlpha(0f);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                // Ensure view is fully visible after animation
+                view.setAlpha(1f);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                // Not used
+            }
+        });
+
+        view.startAnimation(animation);
     }
 
     @Override
@@ -43,6 +138,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     @Override
     public int getItemViewType(int position) {
         return messages.get(position).isUser() ? 0 : 1;
+    }
+
+    // Method to clear animation cache (useful when refreshing chat)
+    public void clearAnimationCache() {
+        animatedPositions.clear();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
