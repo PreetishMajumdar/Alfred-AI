@@ -30,30 +30,23 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             return;
         }
 
-        int previousSize = this.messages != null ? this.messages.size() : 0;
+        int previousSize = this.messages.size();
         int newSize = newMessages.size();
 
-        if (previousSize == 0) {
+        this.messages = newMessages;
+
+        if (previousSize == 0 && newSize > 0) {
             // First time loading messages - no animation
-            this.messages = newMessages;
-            shouldAnimate = false;
-            notifyDataSetChanged();
-            return;
-        }
-
-        if (newSize > previousSize) {
-            // New messages added
-            this.messages = newMessages;
-            shouldAnimate = true;
-
-            // Notify only about the new items to trigger individual animations
-            for (int i = previousSize; i < newSize; i++) {
-                animatedPositions.remove(i); // Ensure this position will be animated
-                notifyItemInserted(i);
+            notifyItemRangeInserted(0, newSize);
+        } else if (newSize > previousSize) {
+            // New messages added - animate new items
+            int insertedCount = newSize - previousSize;
+            for (int i = 0; i < insertedCount; i++) {
+                int position = previousSize + i;
+                notifyItemInserted(position);
             }
         } else {
             // Messages updated or removed
-            this.messages = newMessages;
             notifyDataSetChanged();
         }
     }
@@ -107,11 +100,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         // Load and apply the animation
         Animation animation = AnimationUtils.loadAnimation(view.getContext(), animationResource);
 
-        // Optional: Add animation listener for additional effects
+        // Add animation listener for additional effects
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-                // Optional: Set initial state
+                // Set initial state
                 view.setAlpha(0f);
             }
 
